@@ -2,7 +2,7 @@ module.exports = {
     // a function to run the logic for this role
     run: function(creep) {
         // if in target room
-        if (creep.room.name != creep.memory.target) {
+        if (creep.room.name !== creep.memory.target) {
             // find exit to target room
             var exit = creep.room.findExitTo(creep.memory.target);
             // move to exit
