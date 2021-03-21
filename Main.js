@@ -7,10 +7,11 @@ var roleRepairer = require('role.repairer');
 var roleWallRepairer = require('role.wallRepairer');
 var roleTowerManager = require('role.towerManager');
 var roleMiner = require('role.miner');
-var roleAttacker = require('role.attacker');
+var roleAttacker = require('role.dismantler');
 var roleLorry = require('role.lorry');
 var roleClaimer = require('role.claimer');
 var roleExtractor = require('role.extractor');
+var roleEnergyGuy = require('role.energyGuy');
 
 module.exports.loop = function () {
     // check for memory entries of died creeps by iterating over Memory.creeps
@@ -51,11 +52,16 @@ for (let spawnName in Game.spawns) {
         var numberOfTowerManagersInW37N31 = _.sum(creepsInRoom, (c) => c.memory.role == 'towerManager');
         var numberOfSupportBuilders = _.sum(Game.creeps, (c) => c.memory.role == 'builder' && c.memory.target == 'W37N32');
         var numberOfExtractors = _.sum(creepsInRoom, (c) => c.memory.role == 'extractor');
-        
+        var numberOfEnergyGuys = _.sum(creepsInRoom, (c) => c.memory.role == 'energyGuy');
+        var numberOfClaimers = _.sum(Game.spawns, (c) => c.memory.role == 'claimer');
+
         var name = undefined;
 
-        var bodyparts = [WORK,WORK,CARRY,CARRY,MOVE,MOVE];
-
+        if (spawn.memory.room == 'W36N33'){
+            var bodyparts = [WORK, WORK, WORK, CARRY, CARRY, CARRY, MOVE, MOVE];
+        } else {
+        var bodyparts = [WORK,WORK,WORK,WORK,CARRY,CARRY,MOVE,MOVE];
+};
 
        // if no harvesters are left AND either no miners or no lorries are left
         //  create a backup creep
@@ -86,7 +92,7 @@ for (let spawnName in Game.spawns) {
                     // if there is a container next to the source
                     if (containers.length > 0) {
                         // spawn a miner
-                        name = spawn.createCreep([WORK, WORK, WORK, WORK, MOVE], undefined, { role: 'miner', sourceId: source.id });
+                        name = spawn.createCreep([WORK, WORK, WORK, WORK,WORK, WORK, WORK, WORK, MOVE], undefined, { role: 'miner', sourceId: source.id });
                     }
                 }
             }
@@ -116,7 +122,11 @@ for (let spawnName in Game.spawns) {
         else if (numberOfWallRepairersInW37N31 < spawn.memory.minWallRepairers) {
             // try to spawn one
         name = spawn.createCreep(bodyparts, undefined,
-            { role: 'wallRepairer', working: false});        }
+            { role: 'wallRepairer', repairing: false});        }
+        else if (numberOfAttackers < 3) {
+            // try to spawn one
+        name = Game.spawns.Spawn3.createCreep([WORK,WORK,MOVE,MOVE], undefined,
+        { role: 'attacker', target: 'W37N33'});        }
             // if not enough builders
         else if (numberOfBuildersInW37N31 < spawn.memory.minBuilders) {
             // try to spawn one
@@ -132,8 +142,15 @@ for (let spawnName in Game.spawns) {
             { role: 'towerManager'});        }
         else if (numberOfExtractors < spawn.memory.minExtractors){
         name = spawn.createCreep(bodyparts, undefined,
-            { role: 'extractor'});       
+            { role: 'extractor'});   }    
+        else if (numberOfEnergyGuys < spawn.memory.minEnergyGuys){
+        name = spawn.createCreep(bodyparts, undefined,
+            { role: 'energyGuy', harvesting: false});       
         }
+        else if (numberOfClaimers < 1) {
+            // try to spawn one
+        name = Game.spawns.Spawn1.createCreep([CLAIM, MOVE], undefined,
+            { role: 'claimer', target: 'W36N32'});        }
             
     for(var name in Game.creeps) {
         var creep = Game.creeps[name];
@@ -175,26 +192,28 @@ for (let spawnName in Game.spawns) {
         }
         else if (creep.memory.role == 'extractor'){
             roleExtractor.run(creep);
+        }        
+        else if(creep.memory.role == 'energyGuy'){
+            roleEnergyGuy.run(creep);
         }
-    }
 
-        // print name to console if spawning was a success
-        // name > 0 would not work since string > 0 returns false
-        if (!(name < 0)) {
-            console.log(spawn + " spawned new creep: " + name + " (" + Game.creeps[name].memory.role + ")");
-            console.log("Harvesters    : " + numberOfHarvestersInW37N31);
-            console.log("Upgraders     : " + numberOfUpgradersInW37N31);
-            console.log("Builders      : " + numberOfBuildersInW37N31);
-            console.log("Repairers     : " + numberOfRepairersInW37N31);
-            console.log("Wall Repairers : " + numberOfWallRepairersInW37N31);
-            console.log("Miners        : " + numberOfMiners);
-            console.log("Lorries       : " + numberOfLorries);
-            console.log("Tower Managers : " + numberOfTowerManagersInW37N31);
-        }
+    }
     };
 
+let buyOrders = Game.market.getAllOrders({resourceType: RESOURCE_UTRIUM, type: ORDER_BUY});
+_.sortBy(buyOrders, ['price']);
 
-        if(Game.cpu.bucket == 10000) {
-        Game.cpu.generatePixel();
+let myRooms = _.filter(Game.rooms, r => r.controller && r.controller.my);
+
+_.forEach(myRooms, function(room) {
+    let terminal = room.terminal;
+    if(terminal && !terminal.cooldown && terminal.store.energy) {
+        Game.market.deal(buyOrders[0].id, terminal.store.energy / 2, room.name);
     }
+
+});
+
+    //     if(Game.cpu.bucket == 10000) {
+    //     Game.cpu.generatePixel();
+    // }
 };
