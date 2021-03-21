@@ -38,7 +38,8 @@ var roleHarvester = {
                     creep.moveTo(str);
                 }
             }else {
-                roleUpgrader.run(creep);
+roleUpgrader.run(creep);          
+                
             }
         }
         // if creep is supposed to harvest energy from source
