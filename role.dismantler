@@ -1,0 +1,30 @@
+var roleDismantler = {
+    // a function to run the logic for this role
+    run: function(creep) {
+        // if in target room
+        creep.moveTo(Game.flags.Attacker);
+        if (creep.room.name !== creep.memory.target) {
+            // find exit to target room
+            creep.say(creep.room.name);
+            var exit = creep.room.findExitTo(creep.memory.target);
+            // move to exit
+            creep.moveTo(creep.pos.findClosestByRange(exit), {visualizePathStyle: {stroke: '#FF3535'}});
+        }
+        else {
+            var enemies= creep.pos.findClosestByRange(FIND_STRUCTURES,
+    {filter: {structureType: STRUCTURE_WALL}});
+            
+               var error = creep.dismantle(enemies);
+               
+
+
+            // try to claim controller
+            if (error == ERR_NOT_IN_RANGE) {
+                // move towards the controller
+
+                creep.moveTo(enemies, {visualizePathStyle: {stroke: '#FF3535'}});
+            }
+        }
+    }
+};
+module.exports = roleDismantler;
