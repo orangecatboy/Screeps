@@ -1,23 +1,22 @@
-/*
- * Module code goes here. Use 'module.exports' to export things:
- * module.exports.thing = 'a thing';
- *
- * You can import it from another modules like this:
- * var mod = require('role.attacker');
- * mod.thing == 'a thing'; // true
- */
-
-module.exports = {
+var roleAttacker = {
+    // a function to run the logic for this role
     run: function(creep) {
-        if (creep.room.name != creep.memory.target) {
+        // if in target room
+        creep.moveTo(Game.flags.Attacker);
+        if (creep.room.name !== creep.memory.target) {
+            // find exit to target room
             var exit = creep.room.findExitTo(creep.memory.target);
+            // move to exit
             creep.moveTo(creep.pos.findClosestByRange(exit), {visualizePathStyle: {stroke: '#FF3535'}});
         }
         else {
-    var a = creep.pos.findClosestByRange(FIND_HOSTILE_STRUCTURES);
-        if (a !== undefined) {
-            creep.attack(a);
+var enemy = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
+if(enemy) {
+    if(creep.attack(enemy) == ERR_NOT_IN_RANGE) {
+        creep.moveTo(enemy);
+    }
+}
         }
-            }
-        }
-    };
+    }
+};
+module.exports = roleAttacker;
